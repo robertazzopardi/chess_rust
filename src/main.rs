@@ -6,9 +6,28 @@ use chess::{ASSET_PATH, BOARD_WIDTH, PIECE_SIZE, SQUARES};
 
 const RENDER_SCALE: u32 = (BOARD_WIDTH / 2) - (PIECE_SIZE / 2);
 
+#[derive(Clone, Copy, Debug)]
 enum Side {
     White,
     Black,
+}
+
+impl From<Side> for &str {
+    fn from(side: Side) -> Self {
+        match side {
+            Side::White => "white",
+            Side::Black => "black",
+        }
+    }
+}
+
+impl From<Side> for f32 {
+    fn from(side: Side) -> Self {
+        match side {
+            Side::White => -1.,
+            Side::Black => 1.,
+        }
+    }
 }
 
 #[derive(Component)]
@@ -57,6 +76,88 @@ fn create_piece(texture: Handle<Image>, x: f32, y: f32) -> SpriteBundle {
     }
 }
 
+fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, team: Team) {
+    let color: &str = team.0.into();
+    let offset: f32 = team.0.into();
+
+    // Pawns
+    for i in 0..SQUARES {
+        commands
+            .spawn_bundle(create_piece(
+                asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_pawn.png")),
+                i as f32,
+                250. * offset,
+            ))
+            .insert(Pawn);
+    }
+
+    // Rooks
+    commands
+        .spawn_bundle(create_piece(
+            asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_rook.png")),
+            0.,
+            350. * offset,
+        ))
+        .insert(Rook);
+    commands
+        .spawn_bundle(create_piece(
+            asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_rook.png")),
+            7.,
+            350. * offset,
+        ))
+        .insert(Rook);
+
+    // Knights
+    commands
+        .spawn_bundle(create_piece(
+            asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_knight.png")),
+            1.,
+            350. * offset,
+        ))
+        .insert(Knight);
+    commands
+        .spawn_bundle(create_piece(
+            asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_knight.png")),
+            6.,
+            350. * offset,
+        ))
+        .insert(Knight);
+
+    // Bishop
+    commands
+        .spawn_bundle(create_piece(
+            asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_bishop.png")),
+            2.,
+            350. * offset,
+        ))
+        .insert(Bishop);
+    commands
+        .spawn_bundle(create_piece(
+            asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_bishop.png")),
+            5.,
+            350. * offset,
+        ))
+        .insert(Bishop);
+
+    // Queen
+    commands
+        .spawn_bundle(create_piece(
+            asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_queen.png")),
+            4.,
+            350. * offset,
+        ))
+        .insert(Queen);
+
+    //King
+    commands
+        .spawn_bundle(create_piece(
+            asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_king.png")),
+            3.,
+            350. * offset,
+        ))
+        .insert(King);
+}
+
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Camera
     commands.spawn_bundle(Camera2dBundle::default());
@@ -67,145 +168,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     });
 
-    // Pawns
-    for i in 0..SQUARES {
-        commands
-            .spawn_bundle(create_piece(
-                asset_server.load(&format!("{ASSET_PATH}/pieces/black_pawn.png")),
-                i as f32,
-                250.,
-            ))
-            .insert(Pawn);
-        commands
-            .spawn_bundle(create_piece(
-                asset_server.load(&format!("{ASSET_PATH}/pieces/white_pawn.png")),
-                i as f32,
-                -250.,
-            ))
-            .insert(Pawn);
-    }
-
-    // Rooks
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/black_rook.png")),
-            0.,
-            350.,
-        ))
-        .insert(Rook);
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/black_rook.png")),
-            7.,
-            350.,
-        ))
-        .insert(Rook);
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/white_rook.png")),
-            0.,
-            -350.,
-        ))
-        .insert(Rook);
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/white_rook.png")),
-            7.,
-            -350.,
-        ))
-        .insert(Rook);
-
-    // Knights
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/black_knight.png")),
-            1.,
-            350.,
-        ))
-        .insert(Knight);
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/black_knight.png")),
-            6.,
-            350.,
-        ))
-        .insert(Knight);
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/white_knight.png")),
-            1.,
-            -350.,
-        ))
-        .insert(Knight);
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/white_knight.png")),
-            6.,
-            -350.,
-        ))
-        .insert(Knight);
-
-    // Bishop
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/black_bishop.png")),
-            2.,
-            350.,
-        ))
-        .insert(Bishop);
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/black_bishop.png")),
-            5.,
-            350.,
-        ))
-        .insert(Bishop);
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/white_bishop.png")),
-            2.,
-            -350.,
-        ))
-        .insert(Bishop);
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/white_bishop.png")),
-            5.,
-            -350.,
-        ))
-        .insert(Bishop);
-
-    // Queen
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/black_queen.png")),
-            4.,
-            350.,
-        ))
-        .insert(Queen);
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/white_queen.png")),
-            4.,
-            -350.,
-        ))
-        .insert(Queen);
-
-    //King
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/black_king.png")),
-            3.,
-            350.,
-        ))
-        .insert(King);
-    commands
-        .spawn_bundle(create_piece(
-            asset_server.load(&format!("{ASSET_PATH}/pieces/white_king.png")),
-            3.,
-            -350.,
-        ))
-        .insert(King);
+    add_pieces(&mut commands, &asset_server, Team(Side::White));
+    add_pieces(&mut commands, &asset_server, Team(Side::Black));
 }
 
 fn main() {
