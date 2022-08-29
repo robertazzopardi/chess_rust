@@ -1,9 +1,9 @@
 mod board;
 mod piece;
 
-use bevy::{input::mouse::MouseMotion, prelude::*, time::FixedTimestep, winit::WinitSettings};
-use chess::{ASSET_PATH, BOARD_WIDTH, PIECE_SIZE, SQUARES};
-use piece::{add_pieces, King, Pawn};
+use bevy::prelude::*;
+use chess::ASSET_PATH;
+use piece::{add_pieces, Piece, PieceBundle, PieceType};
 
 // Defines the amount of time that should elapse between each physics step.
 const TIME_STEP: f32 = 1.0 / 60.0;
@@ -86,9 +86,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn tmp(query: Query<(&Pawn, &Side), With<Side>>) {
-    for (pawn, side) in &query {
-        println!("{:?}", side);
+fn tmp(query: Query<(&PieceType, &Side)>) {
+    for (piece, side) in &query {
+        println!("{:?} {:?}", piece, side);
     }
 }
 
