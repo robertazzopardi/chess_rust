@@ -8,6 +8,9 @@ use piece::{add_pieces, King, Pawn};
 // Defines the amount of time that should elapse between each physics step.
 const TIME_STEP: f32 = 1.0 / 60.0;
 
+#[derive(Component)]
+struct Board;
+
 #[derive(Clone, Copy, Debug, Component)]
 pub enum Side {
     White,
@@ -28,6 +31,19 @@ impl From<Side> for f32 {
         match side {
             Side::White => -1.,
             Side::Black => 1.,
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Turn {
+    player: Side,
+}
+
+impl Default for Turn {
+    fn default() -> Self {
+        Self {
+            player: Side::White,
         }
     }
 }
@@ -63,24 +79,24 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Camera
     commands.spawn_bundle(Camera2dBundle::default());
 
-    // Board Background
+    // Board Texture
     commands.spawn_bundle(SpriteBundle {
         texture: asset_server.load(&format!("{ASSET_PATH}/board/board.png")),
         ..Default::default()
     });
 }
 
-fn tmp(query: Query<&Pawn, With<Player>>) {
-    // dbg!(4324);
-    // for k in &query {
-    //     dbg!(k.sprite.transform);
-    // }
+fn tmp(query: Query<(&Pawn, &Side), With<Side>>) {
+    for (pawn, side) in &query {
+        println!("{:?}", side);
+    }
 }
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(Players)
+        .insert_resource(Turn::default())
         // .insert_resource(WinitSettings::game())
         .add_startup_system(window_config)
         .add_startup_system(setup)

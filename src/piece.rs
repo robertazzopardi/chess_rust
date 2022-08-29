@@ -39,49 +39,67 @@ pub fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, side
     let pawn_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_pawn.png"));
     for i in 0..SQUARES {
         commands
-            .spawn_bundle(create_piece(pawn_texture.clone(), i as f32, 250. * offset))
+            .spawn()
+            .insert(Pawn)
+            .insert_bundle(create_piece(pawn_texture.clone(), i as f32, 250. * offset))
             .insert(side);
     }
 
     // Rooks
     let rook_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_rook.png"));
     commands
-        .spawn_bundle(create_piece(rook_texture.clone(), 0., 350. * offset))
+        .spawn()
+        .insert(Rook)
+        .insert_bundle(create_piece(rook_texture.clone(), 0., 350. * offset))
         .insert(side);
     commands
-        .spawn_bundle(create_piece(rook_texture, 7., 350. * offset))
+        .spawn()
+        .insert(Rook)
+        .insert_bundle(create_piece(rook_texture, 7., 350. * offset))
         .insert(side);
 
     // Knights
     let knight_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_knight.png"));
     commands
-        .spawn_bundle(create_piece(knight_texture.clone(), 1., 350. * offset))
+        .spawn()
+        .insert(Knight)
+        .insert_bundle(create_piece(knight_texture.clone(), 1., 350. * offset))
         .insert(side);
     commands
-        .spawn_bundle(create_piece(knight_texture, 6., 350. * offset))
+        .spawn()
+        .insert(Knight)
+        .insert_bundle(create_piece(knight_texture, 6., 350. * offset))
         .insert(side);
 
     // Bishop
     let bishop_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_bishop.png"));
     commands
-        .spawn_bundle(create_piece(bishop_texture.clone(), 2., 350. * offset))
+        .spawn()
+        .insert(Bishop)
+        .insert_bundle(create_piece(bishop_texture.clone(), 2., 350. * offset))
         .insert(side);
     commands
-        .spawn_bundle(create_piece(bishop_texture, 5., 350. * offset))
+        .spawn()
+        .insert(Bishop)
+        .insert_bundle(create_piece(bishop_texture, 5., 350. * offset))
         .insert(side);
 
     // Queen
     commands
-        .spawn_bundle(create_piece(
+        .spawn()
+        .insert(Queen)
+        .insert_bundle(create_piece(
             asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_queen.png")),
             4.,
             350. * offset,
         ))
         .insert(side);
 
-    //King
+    // King
     commands
-        .spawn_bundle(create_piece(
+        .spawn()
+        .insert(King)
+        .insert_bundle(create_piece(
             asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_king.png")),
             3.,
             350. * offset,
