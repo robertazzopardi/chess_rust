@@ -17,7 +17,7 @@ pub struct Piece(PieceType);
 
 #[derive(Component, Bundle)]
 pub struct PieceBundle {
-    pub piece_type: PieceType,
+    pub piece_type: Piece,
     pub side: Side,
     #[bundle]
     pub sprite: SpriteBundle,
@@ -42,7 +42,7 @@ pub fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, side
     let pawn_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_pawn.png"));
     for i in 0..SQUARES {
         commands.spawn_bundle(PieceBundle {
-            piece_type: PieceType::Pawn,
+            piece_type: Piece(PieceType::Pawn),
             sprite: create_piece(pawn_texture.clone(), i as f32, 250. * offset),
             side,
         });
@@ -51,12 +51,12 @@ pub fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, side
     // Rooks
     let rook_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_rook.png"));
     commands.spawn_bundle(PieceBundle {
-        piece_type: PieceType::Rook,
+        piece_type: Piece(PieceType::Rook),
         sprite: create_piece(rook_texture.clone(), 0., 350. * offset),
         side,
     });
     commands.spawn_bundle(PieceBundle {
-        piece_type: PieceType::Rook,
+        piece_type: Piece(PieceType::Rook),
         sprite: create_piece(rook_texture, 7., 350. * offset),
         side,
     });
@@ -64,12 +64,12 @@ pub fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, side
     // Knights
     let knight_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_knight.png"));
     commands.spawn_bundle(PieceBundle {
-        piece_type: PieceType::Knight,
+        piece_type: Piece(PieceType::Knight),
         sprite: create_piece(knight_texture.clone(), 1., 350. * offset),
         side,
     });
     commands.spawn_bundle(PieceBundle {
-        piece_type: PieceType::Knight,
+        piece_type: Piece(PieceType::Knight),
         sprite: create_piece(knight_texture, 6., 350. * offset),
         side,
     });
@@ -77,19 +77,19 @@ pub fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, side
     // Bishop
     let bishop_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_bishop.png"));
     commands.spawn_bundle(PieceBundle {
-        piece_type: PieceType::Bishop,
+        piece_type: Piece(PieceType::Bishop),
         sprite: create_piece(bishop_texture.clone(), 2., 350. * offset),
         side,
     });
     commands.spawn_bundle(PieceBundle {
-        piece_type: PieceType::Bishop,
+        piece_type: Piece(PieceType::Bishop),
         sprite: create_piece(bishop_texture, 5., 350. * offset),
         side,
     });
 
     // Queen
     commands.spawn_bundle(PieceBundle {
-        piece_type: PieceType::Queen,
+        piece_type: Piece(PieceType::Queen),
         sprite: create_piece(
             asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_queen.png")),
             4.,
@@ -100,7 +100,7 @@ pub fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, side
 
     // King
     commands.spawn_bundle(PieceBundle {
-        piece_type: PieceType::King,
+        piece_type: Piece(PieceType::King),
         sprite: create_piece(
             asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_king.png")),
             3.,
@@ -113,26 +113,31 @@ pub fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, side
 pub fn move_piece(
     windows: Res<Windows>,
     mouse_input: Res<Input<MouseButton>>,
-    mut query: Query<&mut Transform, With<Piece>>,
+    mut query: Query<(&mut Transform, &Piece), With<Piece>>,
 ) {
     let window = windows.get_primary().unwrap();
 
     if mouse_input.just_pressed(MouseButton::Left) {
         if let Some(Vec2 { x, y }) = window.cursor_position() {
-            let mx = ((x / 100.).floor() * 100.) as u32;
-            let my = ((y / 100.).floor() * 100.) as u32;
+            let mx = 700 - ((x / 100.).floor() * 100.) as u32;
+            let my = 700 - ((y / 100.).floor() * 100.) as u32;
 
             println!("{mx} {my} mouse\n");
 
-            for mut piece_transform in query.iter_mut() {
+            for (mut piece_transform, piece_type) in query.iter_mut() {
                 // let mut direction = 0.0;
 
                 let Vec3 { x, y, .. } = piece_transform.translation;
-                let py = ((x / 100.).floor() * 100.) as u32;
-                let px = ((y / 100.).floor() * 100.) as u32;
 
-                // println!("{px} {py} piece\n");
+                let px = (350. - x) as u32;
+                let py = (350. - y) as u32;
+                // println!("{x} {y} {piece_type:?}");
+
+                // let px = ((x / 100.).floor() * 100.) as u32;
+                // let py = ((y / 100.).floor() * 100.) as u32;
+
                 if px == mx && py == my {
+                    println!("{px} {py} piece\n");
                     piece_transform.translation.y += PIECE_SIZE as f32;
                 }
 
@@ -143,6 +148,8 @@ pub fn move_piece(
 
                 // piece_transform.translation.x = new_paddle_position;
             }
+
+            println!();
         }
     }
 }

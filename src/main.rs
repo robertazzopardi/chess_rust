@@ -1,9 +1,9 @@
 mod board;
 mod piece;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, time::FixedTimestep};
 use chess::ASSET_PATH;
-use piece::{add_pieces, Piece, PieceBundle, PieceType};
+use piece::{add_pieces, Piece, PieceBundle, PieceType, move_piece};
 
 // Defines the amount of time that should elapse between each physics step.
 const TIME_STEP: f32 = 1.0 / 60.0;
@@ -88,7 +88,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn tmp(query: Query<(&PieceType, &Side)>) {
     for (piece, side) in &query {
-        println!("{:?} {:?}", piece, side);
+        // println!("{:?} {:?}", piece, side);
     }
 }
 
@@ -101,15 +101,15 @@ fn main() {
         .add_startup_system(window_config)
         .add_startup_system(setup)
         .add_system(tmp)
-        // .add_system_set(
-        //     SystemSet::new()
-        //         .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
-        //         // .with_system(check_for_collisions)
-        //         // .with_system(move_paddle.before(check_for_collisions))
-        //         .with_system(move_piece),
-        //     // .with_system(apply_velocity.before(check_for_collisions))
-        //     // .with_system(play_collision_sound.after(check_for_collisions)),
-        // )
+        .add_system_set(
+            SystemSet::new()
+                .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
+                // .with_system(check_for_collisions)
+                // .with_system(move_paddle.before(check_for_collisions))
+                .with_system(move_piece),
+            // .with_system(apply_velocity.before(check_for_collisions))
+            // .with_system(play_collision_sound.after(check_for_collisions)),
+        )
         .add_system(bevy::window::close_on_esc)
         .run();
 }
