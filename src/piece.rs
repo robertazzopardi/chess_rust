@@ -1,4 +1,4 @@
-use crate::Side;
+use crate::{GameState, Side};
 use bevy::prelude::*;
 use chess::{ASSET_PATH, PIECE_SIZE, RENDER_SCALE, SQUARES};
 
@@ -110,46 +110,87 @@ pub fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, side
     });
 }
 
-pub fn move_piece(
+fn check_if_piece<'a>(
+    window: &'a Window,
+    query: &'a mut Query<(&mut Transform, &Piece), With<Piece>>,
+) -> Option<&'a Piece> {
+    if let Some(Vec2 { x, y }) = window.cursor_position() {
+        let mx = 700. - ((x / 100.).floor() * 100.);
+        let my = 700. - ((y / 100.).floor() * 100.);
+
+        // println!("{x} {y}");
+        // println!("{mx} {my} mouse\n");
+
+        for (mut piece_transform, piece) in query.iter_mut() {
+            let Vec3 { x, y, z } = piece_transform.translation;
+
+            // println!("{x} {y} {piece_type:?} piece");
+
+            let px = 350. - x;
+            let py = 350. - y;
+
+            if px == mx && py == my {
+                // piece_transform.translation.x = 350.;
+                // piece_transform.translation.y = 350.;
+                return Some(piece);
+            }
+        }
+    }
+
+    None
+}
+
+pub fn handle_mouse_input(
     windows: Res<Windows>,
     mouse_input: Res<Input<MouseButton>>,
+    mut game_state: ResMut<GameState>,
     mut query: Query<(&mut Transform, &Piece), With<Piece>>,
 ) {
     let window = windows.get_primary().unwrap();
 
-    if mouse_input.just_pressed(MouseButton::Left) {
-        if let Some(Vec2 { x, y }) = window.cursor_position() {
-            let mx = 700 - ((x / 100.).floor() * 100.) as u32;
-            let my = 700 - ((y / 100.).floor() * 100.) as u32;
-
-            println!("{mx} {my} mouse\n");
-
-            for (mut piece_transform, piece_type) in query.iter_mut() {
-                // let mut direction = 0.0;
-
-                let Vec3 { x, y, .. } = piece_transform.translation;
-
-                let px = (350. - x) as u32;
-                let py = (350. - y) as u32;
-                // println!("{x} {y} {piece_type:?}");
-
-                // let px = ((x / 100.).floor() * 100.) as u32;
-                // let py = ((y / 100.).floor() * 100.) as u32;
-
-                if px == mx && py == my {
-                    println!("{px} {py} piece\n");
-                    piece_transform.translation.y += PIECE_SIZE as f32;
-                }
-
-                // if mouse_input.just_released(MouseButton::Left) {}
-
-                // let new_paddle_position =
-                //     piece_transform.translation.x + direction * 1. * TIME_STEP;
-
-                // piece_transform.translation.x = new_paddle_position;
-            }
-
-            println!();
+    if mouse_input.just_released(MouseButton::Left) {
+        // dbg!("released");
+        if let Some(piece) = &game_state.piece_selected {
+            game_state.piece_selected = None;
         }
     }
+
+    if mouse_input.pressed(MouseButton::Left) {
+        // dbg!("pressed");
+        if let Some(piece) = check_if_piece(window, &mut query) {
+            dbg!(piece);
+        }
+    }
+
+    if let Some(Vec2 { x, y }) = window.cursor_position() {
+        // dbg!("motion");
+    }
+
+    // if mouse_input.pressed(MouseButton::Left) {
+    //     if let Some(Vec2 { x, y }) = window.cursor_position() {
+    //         let mx = 700. - ((x / 100.).floor() * 100.);
+    //         let my = 700. - ((y / 100.).floor() * 100.);
+
+    //         println!("{x} {y}");
+    //         println!("{mx} {my} mouse\n");
+
+    //         for (mut piece_transform, piece_type) in query.iter_mut() {
+    //             let Vec3 { x, y, z } = piece_transform.translation;
+
+    //             println!("{x} {y} {piece_type:?} piece");
+
+    //             let px = 350. - x;
+    //             let py = 350. - y;
+
+    //             if px == mx && py == my {
+    //                 // println!("{px} {py} piece\n");
+    //                 // piece_transform.translation.y += PIECE_SIZE as f32;
+    //                 println!("{} {}", mx, my);
+    //                 piece_transform.translation.x = 350.;
+    //                 piece_transform.translation.y = 350.;
+    //                 break;
+    //             }
+    //         }
+    //     }
+    // }
 }
