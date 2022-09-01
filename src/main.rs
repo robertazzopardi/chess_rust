@@ -1,14 +1,11 @@
 mod board;
 mod piece;
 
-use std::ops::{Deref, DerefMut};
-
-use bevy::{prelude::*, time::FixedTimestep};
+use bevy::{prelude::*, time::FixedTimestep, window::PresentMode, winit::WinitSettings};
 use chess::ASSET_PATH;
-use piece::{add_pieces, handle_mouse_input, Piece, PieceBundle, PieceType};
+use piece::{add_pieces, handle_piece_movement, PieceType};
 
-// Defines the amount of time that should elapse between each physics step.
-const TIME_STEP: f32 = 1.0 / 60.0;
+const FRAME_TIME: f32 = 1.0 / 60.0;
 
 #[derive(Component)]
 pub struct Dragging;
@@ -75,6 +72,7 @@ fn window_config(mut windows: ResMut<Windows>) {
     let window = windows.get_primary_mut().unwrap();
     window.set_resolution(chess::BOARD_WIDTH as f32, chess::BOARD_WIDTH as f32);
     window.set_resizable(false);
+    window.set_present_mode(PresentMode::AutoVsync);
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -99,16 +97,16 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(Players)
         .insert_resource(GameState::default())
-        // .insert_resource(WinitSettings::game())
+        .insert_resource(WinitSettings::game())
         .add_startup_system(window_config)
         .add_startup_system(setup)
         .add_system(tmp)
         .add_system_set(
             SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
+                .with_run_criteria(FixedTimestep::step(FRAME_TIME as f64))
                 // .with_system(check_for_collisions)
                 // .with_system(move_paddle.before(check_for_collisions))
-                .with_system(handle_mouse_input),
+                .with_system(handle_piece_movement),
             // .with_system(apply_velocity.before(check_for_collisions))
             // .with_system(play_collision_sound.after(check_for_collisions)),
         )
