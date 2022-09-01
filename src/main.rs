@@ -11,6 +11,9 @@ use piece::{add_pieces, handle_mouse_input, Piece, PieceBundle, PieceType};
 const TIME_STEP: f32 = 1.0 / 60.0;
 
 #[derive(Component)]
+pub struct Dragging;
+
+#[derive(Component)]
 struct Board;
 
 #[derive(Clone, Copy, Debug, Component)]
@@ -39,15 +42,11 @@ impl From<Side> for f32 {
 
 pub struct GameState {
     pub turn: Side,
-    pub piece_selected: Option<PieceBundle>,
 }
 
 impl Default for GameState {
     fn default() -> Self {
-        Self {
-            turn: Side::White,
-            piece_selected: None,
-        }
+        Self { turn: Side::White }
     }
 }
 

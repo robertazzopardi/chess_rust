@@ -1,4 +1,4 @@
-use crate::{GameState, Side};
+use crate::{Dragging, GameState, Side};
 use bevy::prelude::*;
 use chess::{ASSET_PATH, PIECE_SIZE, RENDER_SCALE, SQUARES};
 
@@ -110,10 +110,10 @@ pub fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, side
     });
 }
 
-fn check_if_piece<'a>(
-    window: &'a Window,
-    query: &'a mut Query<(&mut Transform, &Piece), With<Piece>>,
-) -> Option<&'a Piece> {
+fn check_if_piece(
+    window: &Window,
+    query: &mut Query<(Entity, &mut Transform, &Piece), With<Piece>>,
+) -> Option<Entity> {
     if let Some(Vec2 { x, y }) = window.cursor_position() {
         let mx = 700. - ((x / 100.).floor() * 100.);
         let my = 700. - ((y / 100.).floor() * 100.);
@@ -121,7 +121,7 @@ fn check_if_piece<'a>(
         // println!("{x} {y}");
         // println!("{mx} {my} mouse\n");
 
-        for (mut piece_transform, piece) in query.iter_mut() {
+        for (entity, mut piece_transform, piece) in query.iter_mut() {
             let Vec3 { x, y, z } = piece_transform.translation;
 
             // println!("{x} {y} {piece_type:?} piece");
@@ -132,7 +132,8 @@ fn check_if_piece<'a>(
             if px == mx && py == my {
                 // piece_transform.translation.x = 350.;
                 // piece_transform.translation.y = 350.;
-                return Some(piece);
+                // piece_transform.translation = mxy;
+                return Some(entity);
             }
         }
     }
@@ -140,31 +141,71 @@ fn check_if_piece<'a>(
     None
 }
 
+fn window_to_world(position: Vec2, window: &Window, camera: &Transform) -> Vec3 {
+    // Center in screen space
+    let norm = Vec3::new(
+        position.x - window.width() / 2.,
+        position.y - window.height() / 2.,
+        0.,
+    );
+
+    // Apply camera transform
+    *camera * norm
+
+    // Alternatively:
+    //camera.mul_vec3(norm)
+}
+
 pub fn handle_mouse_input(
+    mut commands: Commands,
     windows: Res<Windows>,
     mouse_input: Res<Input<MouseButton>>,
-    mut game_state: ResMut<GameState>,
-    mut query: Query<(&mut Transform, &Piece), With<Piece>>,
+    // mut query: Query<(&mut Transform, &Piece), With<Piece>>,
+    mut set: ParamSet<(
+        Query<(Entity, &mut Transform, &Piece), With<Piece>>,
+        Query<&Transform, With<Camera>>,
+        Query<(Entity, &Transform), With<Dragging>>,
+    )>,
 ) {
     let window = windows.get_primary().unwrap();
 
+    let normalized_mouse_coords = {
+        let mut m = Vec3::default();
+        if let Some(position) = window.cursor_position() {
+            let camera = set.p1();
+            let camera_transform = camera.single();
+            m = window_to_world(position, window, camera_transform);
+        }
+        m
+    };
+
     if mouse_input.just_released(MouseButton::Left) {
-        // dbg!("released");
-        if let Some(piece) = &game_state.piece_selected {
-            game_state.piece_selected = None;
+        if let Ok((entity, _)) = set.p2().get_single() {
+            commands.entity(entity).remove::<Dragging>();
+            dbg!("not dragging any more");
         }
     }
 
-    if mouse_input.pressed(MouseButton::Left) {
-        // dbg!("pressed");
-        if let Some(piece) = check_if_piece(window, &mut query) {
-            dbg!(piece);
+    if mouse_input.just_pressed(MouseButton::Left) {
+        if let Some(piece_entity) = check_if_piece(window, &mut set.p0()) {
+            // dbg!(piece);
+            commands.entity(piece_entity).insert(Dragging);
         }
     }
 
-    if let Some(Vec2 { x, y }) = window.cursor_position() {
-        // dbg!("motion");
+    if let Ok(piece_dragging) = set.p2().get_single_mut() {
+        dbg!(piece_dragging);
     }
+
+    // let mxy = {
+    //     let mut m = Vec3::default();
+    //     if let Some(position) = window.cursor_position() {
+    //         let camera = set.p1();
+    //         let camera_transform = camera.single();
+    //         m = window_to_world(position, window, camera_transform);
+    //     }
+    //     m
+    // };
 
     // if mouse_input.pressed(MouseButton::Left) {
     //     if let Some(Vec2 { x, y }) = window.cursor_position() {
