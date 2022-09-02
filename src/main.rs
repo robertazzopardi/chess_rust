@@ -28,12 +28,16 @@ impl From<Side> for &str {
     }
 }
 
-impl From<Side> for f32 {
-    fn from(side: Side) -> Self {
-        match side {
+impl Side {
+    pub fn offset(&self) -> f32 {
+        match self {
             Side::White => -1.,
             Side::Black => 1.,
         }
+    }
+
+    pub fn dir(&self) -> f32 {
+        self.offset() * -1.
     }
 }
 
