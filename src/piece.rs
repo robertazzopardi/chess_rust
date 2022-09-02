@@ -42,19 +42,21 @@ pub struct PieceBundle {
 }
 
 macro_rules! spawn_piece {
-    ($commands:expr, $texture:expr, $x:expr, $y:expr, $offset:expr, $side:expr, $piece:ident) => {
-        $commands.spawn_bundle(PieceBundle {
-            piece_type: Piece(PieceType::$piece($piece)),
-            sprite: SpriteBundle {
-                texture: $texture.clone(),
-                transform: Transform {
-                    translation: Vec3::new($x * 100. - RENDER_SCALE as f32, $y * $offset, 1.),
+    ($commands:expr, $texture:expr,  $y:expr, $offset:expr, $side:expr, $piece:ident, $( $x:expr ),*) => {
+        $(
+            $commands.spawn_bundle(PieceBundle {
+                piece_type: Piece(PieceType::$piece($piece)),
+                sprite: SpriteBundle {
+                    texture: $texture.clone(),
+                    transform: Transform {
+                        translation: Vec3::new($x * 100. - RENDER_SCALE as f32, $y * $offset, 1.),
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
-                ..Default::default()
-            },
-            side: $side,
-        })
+                side: $side,
+            });
+        )*
     };
 }
 
@@ -65,31 +67,28 @@ pub fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, side
     // Pawns
     let pawn_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_pawn.png"));
     for i in 0..SQUARES {
-        spawn_piece!(commands, pawn_texture, i as f32, 250., offset, side, Pawn);
+        spawn_piece!(commands, pawn_texture, 250., offset, side, Pawn, i as f32);
     }
 
     // Rooks
     let rook_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_rook.png"));
-    spawn_piece!(commands, rook_texture, 0., 350., offset, side, Rook);
-    spawn_piece!(commands, rook_texture, 7., 350., offset, side, Rook);
+    spawn_piece!(commands, rook_texture, 350., offset, side, Rook, 0., 7.);
 
     // Knights
     let knight_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_knight.png"));
-    spawn_piece!(commands, knight_texture, 1., 350., offset, side, Knight);
-    spawn_piece!(commands, knight_texture, 6., 350., offset, side, Knight);
+    spawn_piece!(commands, knight_texture, 350., offset, side, Knight, 1., 6.);
 
     // Bishop
     let bishop_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_bishop.png"));
-    spawn_piece!(commands, bishop_texture, 2., 350., offset, side, Bishop);
-    spawn_piece!(commands, bishop_texture, 5., 350., offset, side, Bishop);
+    spawn_piece!(commands, bishop_texture, 350., offset, side, Bishop, 2., 5.);
 
     // Queen
     let queen_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_queen.png"));
-    spawn_piece!(commands, queen_texture, 4., 350., offset, side, Queen);
+    spawn_piece!(commands, queen_texture, 350., offset, side, Queen, 4.);
 
     // King
     let king_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_king.png"));
-    spawn_piece!(commands, king_texture, 3., 350., offset, side, King);
+    spawn_piece!(commands, king_texture, 350., offset, side, King, 3.);
 }
 
 fn check_if_piece(
