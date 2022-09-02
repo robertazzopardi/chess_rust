@@ -1,6 +1,6 @@
 use crate::{Dragging, Side};
 use bevy::prelude::*;
-use chess::{ASSET_PATH, RENDER_SCALE, SQUARES};
+use chess::{window_to_world, ASSET_PATH, RENDER_SCALE, SQUARES};
 
 pub trait Logic {
     fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool;
@@ -13,20 +13,10 @@ impl Logic for Pawn {
     fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
         let dir: f32 = side.dir();
 
-        let dx = new_pos.x - old_pos.x;
-        let dy = new_pos.y - old_pos.y;
+        let Vec3 { x, y, .. } = new_pos - old_pos;
 
-        match side {
-            Side::White => {
-                if dx == 0. && dy == dir * 100. {
-                    return true;
-                }
-            }
-            Side::Black => {
-                if dx == 0. && dy == dir * 100. {
-                    return true;
-                }
-            }
+        if x == 0. && y == dir * 100. {
+            return true;
         }
 
         false
@@ -38,7 +28,7 @@ pub struct Rook;
 
 impl Logic for Rook {
     fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
-        true
+        false
     }
 }
 
@@ -47,7 +37,7 @@ pub struct Knight;
 
 impl Logic for Knight {
     fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
-        true
+        false
     }
 }
 
@@ -56,7 +46,7 @@ pub struct Bishop;
 
 impl Logic for Bishop {
     fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
-        true
+        false
     }
 }
 
@@ -65,7 +55,7 @@ pub struct Queen;
 
 impl Logic for Queen {
     fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
-        true
+        false
     }
 }
 
@@ -74,7 +64,7 @@ pub struct King;
 
 impl Logic for King {
     fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
-        true
+        false
     }
 }
 
@@ -185,18 +175,6 @@ fn check_if_piece(
     None
 }
 
-#[inline]
-fn window_to_world(position: Vec2, window: &Window, camera: &Transform) -> Vec3 {
-    // Center in screen space
-    let norm = Vec3::new(
-        position.x - window.width() / 2.,
-        position.y - window.height() / 2.,
-        0.,
-    );
-
-    camera.mul_vec3(norm)
-}
-
 #[derive(Component)]
 pub struct OldPosition(Vec3);
 
@@ -263,42 +241,4 @@ pub fn handle_piece_movement(
             transform.translation.z = 32.;
         }
     }
-
-    // let mxy = {
-    //     let mut m = Vec3::default();
-    //     if let Some(position) = window.cursor_position() {
-    //         let camera = set.p1();
-    //         let camera_transform = camera.single();
-    //         m = window_to_world(position, window, camera_transform);
-    //     }
-    //     m
-    // };
-
-    // if mouse_input.pressed(MouseButton::Left) {
-    //     if let Some(Vec2 { x, y }) = window.cursor_position() {
-    //         let mx = 700. - ((x / 100.).floor() * 100.);
-    //         let my = 700. - ((y / 100.).floor() * 100.);
-
-    //         println!("{x} {y}");
-    //         println!("{mx} {my} mouse\n");
-
-    //         for (mut piece_transform, piece_type) in query.iter_mut() {
-    //             let Vec3 { x, y, z } = piece_transform.translation;
-
-    //             println!("{x} {y} {piece_type:?} piece");
-
-    //             let px = 350. - x;
-    //             let py = 350. - y;
-
-    //             if px == mx && py == my {
-    //                 // println!("{px} {py} piece\n");
-    //                 // piece_transform.translation.y += PIECE_SIZE as f32;
-    //                 println!("{} {}", mx, my);
-    //                 piece_transform.translation.x = 350.;
-    //                 piece_transform.translation.y = 350.;
-    //                 break;
-    //             }
-    //         }
-    //     }
-    // }
 }
