@@ -1,7 +1,9 @@
 use crate::{Dragging, GameState, Side};
 use bevy::prelude::*;
 use chess::{window_to_world, ASSET_PATH, RENDER_SCALE, SQUARES};
+use enum_dispatch::enum_dispatch;
 
+#[enum_dispatch(PieceType)]
 pub trait Logic {
     fn can_move(
         &self,
@@ -114,6 +116,7 @@ impl Logic for King {
 }
 
 #[derive(Component, Debug, PartialEq, Eq)]
+#[enum_dispatch]
 pub enum PieceType {
     Pawn(Pawn),
     Rook(Rook),
@@ -121,25 +124,6 @@ pub enum PieceType {
     Bishop(Bishop),
     Queen(Queen),
     King(King),
-}
-
-impl Logic for PieceType {
-    fn can_move(
-        &self,
-        side: Side,
-        old_pos: Vec3,
-        new_pos: Vec3,
-        made_first_move: Option<&MadeFirstMove>,
-    ) -> bool {
-        match self {
-            PieceType::Pawn(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
-            PieceType::Rook(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
-            PieceType::Knight(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
-            PieceType::Bishop(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
-            PieceType::Queen(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
-            PieceType::King(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
-        }
-    }
 }
 
 #[derive(Component, Debug, Deref)]
@@ -214,9 +198,6 @@ fn check_if_piece(
         for (entity, piece_transform) in query.iter_mut() {
             let Vec3 { x, y, .. } = 350. - piece_transform.translation;
 
-            // let px = 350. - x;
-            // let py = 350. - y;
-
             if x == mx && y == my {
                 return Some((entity, piece_transform.translation));
             }
@@ -253,20 +234,12 @@ pub fn handle_mouse_up(
     )>,
 ) {
     let window = windows.primary();
-
-    // Normalize camera Coordinates
-    let normalized_mouse_coords = {
-        let mut m = Vec3::default();
-        if let Some(position) = window.cursor_position() {
-            m = window_to_world(position, window, set.p0().single());
-        }
-        m
-    };
+    let camera_pos = window_to_world(window, set.p0().single());
 
     // Handle just releasing the mouse
     if mouse_input.just_released(MouseButton::Left) {
         if let Ok(piece_entity) = set.p1().get_single_mut() {
-            let aligned_mouse_coords = (normalized_mouse_coords / 50.).round() * 50.;
+            let aligned_mouse_coords = (camera_pos / 50.).round() * 50.;
 
             let (entity, mut transform, old_pos, piece, side, made_first_move) = piece_entity;
 
@@ -320,19 +293,12 @@ pub fn handle_mouse_movement(
     )>,
 ) {
     let window = windows.primary();
-
-    let normalized_mouse_coords = {
-        let mut m = Vec3::default();
-        if let Some(position) = window.cursor_position() {
-            m = window_to_world(position, window, set.p0().single());
-        }
-        m
-    };
+    let camera_pos = window_to_world(window, set.p0().single());
 
     // Drag piece if one is selected
     if let Ok(mut transform) = set.p1().get_single_mut() {
         if !mouse_input.just_released(MouseButton::Left) {
-            transform.translation = normalized_mouse_coords;
+            transform.translation = camera_pos;
             transform.translation.z = 32.;
         }
     }

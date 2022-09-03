@@ -964,6 +964,7 @@ name = "chess"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "enum_dispatch",
  "strum",
  "strum_macros",
 ]
@@ -1323,6 +1324,18 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f2f4de457d974f548d2c2a16f709ebd81013579e543bd1a9b19ced88132c2cf"
 dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "enum_dispatch"
+version = "0.3.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0eb359f1476bf611266ac1f5355bc14aeca37b299d0ebccc038ee7058891c9cb"
+dependencies = [
+ "once_cell",
  "proc-macro2",
  "quote",
  "syn",
