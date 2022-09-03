@@ -2,11 +2,14 @@
 name = "chess"
 version = "0.1.0"
 edition = "2021"
+include = ["src/**/*", "README.md"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 bevy = { version = "0.8.1", features = ["dynamic"] }
+strum = "0.24"
+strum_macros = "0.24"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

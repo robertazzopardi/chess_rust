@@ -3,7 +3,8 @@ mod piece;
 
 use bevy::{prelude::*, time::FixedTimestep, window::PresentMode, winit::WinitSettings};
 use chess::ASSET_PATH;
-use piece::{add_pieces, handle_piece_movement, PieceType};
+use piece::{add_pieces, handle_mouse_movement, handle_mouse_press, handle_mouse_up};
+use strum_macros::IntoStaticStr;
 
 const FRAME_TIME: f32 = 1.0 / 60.0;
 
@@ -13,19 +14,10 @@ pub struct Dragging;
 #[derive(Component)]
 struct Board;
 
-#[derive(Clone, Copy, Debug, Component, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Component, PartialEq, Eq, IntoStaticStr)]
 pub enum Side {
     White,
     Black,
-}
-
-impl From<Side> for &str {
-    fn from(side: Side) -> Self {
-        match side {
-            Side::White => "white",
-            Side::Black => "black",
-        }
-    }
 }
 
 impl Side {
@@ -100,9 +92,17 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn tmp(query: Query<(&PieceType, &Side)>) {
-    for (_piece, _side) in &query {
-        // println!("{:?} {:?}", piece, side);
+struct PieceMovement;
+
+impl Plugin for PieceMovement {
+    fn build(&self, app: &mut App) {
+        app.add_system_set(
+            SystemSet::new()
+                .with_run_criteria(FixedTimestep::step(FRAME_TIME as f64))
+                .with_system(handle_mouse_up)
+                .with_system(handle_mouse_press)
+                .with_system(handle_mouse_movement),
+        );
     }
 }
 
@@ -110,20 +110,11 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(Players)
+        .add_plugin(PieceMovement)
         .insert_resource(GameState::default())
         .insert_resource(WinitSettings::game())
         .add_startup_system(window_config)
         .add_startup_system(setup)
-        .add_system(tmp)
-        .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(FRAME_TIME as f64))
-                // .with_system(check_for_collisions)
-                // .with_system(move_paddle.before(check_for_collisions))
-                .with_system(handle_piece_movement),
-            // .with_system(apply_velocity.before(check_for_collisions))
-            // .with_system(play_collision_sound.after(check_for_collisions)),
-        )
         .add_system(bevy::window::close_on_esc)
         .run();
 }

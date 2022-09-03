@@ -232,13 +232,12 @@ pub struct OldPosition(Vec3);
 #[derive(Component)]
 pub struct MadeFirstMove;
 
-pub fn handle_piece_movement(
+pub fn handle_mouse_up(
     mut commands: Commands,
     windows: Res<Windows>,
     mouse_input: Res<Input<MouseButton>>,
     mut game_state: ResMut<GameState>,
     mut set: ParamSet<(
-        Query<(Entity, &mut Transform), With<Piece>>,
         Query<&Transform, With<Camera>>,
         Query<
             (
@@ -259,14 +258,14 @@ pub fn handle_piece_movement(
     let normalized_mouse_coords = {
         let mut m = Vec3::default();
         if let Some(position) = window.cursor_position() {
-            m = window_to_world(position, window, set.p1().single());
+            m = window_to_world(position, window, set.p0().single());
         }
         m
     };
 
     // Handle just releasing the mouse
     if mouse_input.just_released(MouseButton::Left) {
-        if let Ok(piece_entity) = set.p2().get_single_mut() {
+        if let Ok(piece_entity) = set.p1().get_single_mut() {
             let aligned_mouse_coords = (normalized_mouse_coords / 50.).round() * 50.;
 
             let (entity, mut transform, old_pos, piece, side, made_first_move) = piece_entity;
@@ -292,19 +291,46 @@ pub fn handle_piece_movement(
                 .remove::<OldPosition>();
         }
     }
+}
 
-    // Handle pressing the mouse
+pub fn handle_mouse_press(
+    mut commands: Commands,
+    mouse_input: Res<Input<MouseButton>>,
+    windows: Res<Windows>,
+    mut query: Query<(Entity, &mut Transform), With<Piece>>,
+) {
+    let window = windows.primary();
+
     if mouse_input.just_pressed(MouseButton::Left) {
-        if let Some((piece_entity, translation)) = check_if_piece(window, &mut set.p0()) {
+        if let Some((piece_entity, translation)) = check_if_piece(window, &mut query) {
             commands
                 .entity(piece_entity)
                 .insert(Dragging)
                 .insert(OldPosition(translation));
         }
     }
+}
+
+pub fn handle_mouse_movement(
+    windows: Res<Windows>,
+    mouse_input: Res<Input<MouseButton>>,
+    mut set: ParamSet<(
+        Query<&Transform, With<Camera>>,
+        Query<&mut Transform, With<Dragging>>,
+    )>,
+) {
+    let window = windows.primary();
+
+    let normalized_mouse_coords = {
+        let mut m = Vec3::default();
+        if let Some(position) = window.cursor_position() {
+            m = window_to_world(position, window, set.p0().single());
+        }
+        m
+    };
 
     // Drag piece if one is selected
-    if let Ok((_, mut transform, _, _, _, _)) = set.p2().get_single_mut() {
+    if let Ok(mut transform) = set.p1().get_single_mut() {
         if !mouse_input.just_released(MouseButton::Left) {
             transform.translation = normalized_mouse_coords;
             transform.translation.z = 32.;
