@@ -13,7 +13,7 @@ pub struct Dragging;
 #[derive(Component)]
 struct Board;
 
-#[derive(Clone, Copy, Debug, Component)]
+#[derive(Clone, Copy, Debug, Component, PartialEq, Eq)]
 pub enum Side {
     White,
     Black,
@@ -43,6 +43,16 @@ impl Side {
 
 pub struct GameState {
     pub turn: Side,
+}
+
+impl GameState {
+    pub fn change_side(&mut self) {
+        if self.turn == Side::White {
+            self.turn = Side::Black;
+        } else {
+            self.turn = Side::White;
+        };
+    }
 }
 
 impl Default for GameState {

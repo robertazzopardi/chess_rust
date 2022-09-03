@@ -1,16 +1,28 @@
-use crate::{Dragging, Side};
+use crate::{Dragging, GameState, Side};
 use bevy::prelude::*;
 use chess::{window_to_world, ASSET_PATH, RENDER_SCALE, SQUARES};
 
 pub trait Logic {
-    fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool;
+    fn can_move(
+        &self,
+        side: Side,
+        old_pos: Vec3,
+        new_pos: Vec3,
+        made_first_move: Option<&MadeFirstMove>,
+    ) -> bool;
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Pawn;
 
 impl Logic for Pawn {
-    fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
+    fn can_move(
+        &self,
+        side: Side,
+        old_pos: Vec3,
+        new_pos: Vec3,
+        made_first_move: Option<&MadeFirstMove>,
+    ) -> bool {
         let dir: f32 = side.dir();
 
         let Vec3 { x, y, .. } = new_pos - old_pos;
@@ -18,57 +30,90 @@ impl Logic for Pawn {
         if x == 0. && y == dir * 100. {
             return true;
         }
+        if x == 0. && y == dir * 200. && made_first_move.is_none() {
+            return true;
+        }
 
         false
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Rook;
 
 impl Logic for Rook {
-    fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
+    fn can_move(
+        &self,
+        side: Side,
+        old_pos: Vec3,
+        new_pos: Vec3,
+        made_first_move: Option<&MadeFirstMove>,
+    ) -> bool {
         false
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Knight;
 
 impl Logic for Knight {
-    fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
+    fn can_move(
+        &self,
+        side: Side,
+        old_pos: Vec3,
+        new_pos: Vec3,
+        made_first_move: Option<&MadeFirstMove>,
+    ) -> bool {
         false
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Bishop;
 
 impl Logic for Bishop {
-    fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
+    fn can_move(
+        &self,
+        side: Side,
+        old_pos: Vec3,
+        new_pos: Vec3,
+        made_first_move: Option<&MadeFirstMove>,
+    ) -> bool {
         false
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Queen;
 
 impl Logic for Queen {
-    fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
+    fn can_move(
+        &self,
+        side: Side,
+        old_pos: Vec3,
+        new_pos: Vec3,
+        made_first_move: Option<&MadeFirstMove>,
+    ) -> bool {
         false
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct King;
 
 impl Logic for King {
-    fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
+    fn can_move(
+        &self,
+        side: Side,
+        old_pos: Vec3,
+        new_pos: Vec3,
+        made_first_move: Option<&MadeFirstMove>,
+    ) -> bool {
         false
     }
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, PartialEq, Eq)]
 pub enum PieceType {
     Pawn(Pawn),
     Rook(Rook),
@@ -79,14 +124,20 @@ pub enum PieceType {
 }
 
 impl Logic for PieceType {
-    fn can_move(&self, side: Side, old_pos: Vec3, new_pos: Vec3) -> bool {
+    fn can_move(
+        &self,
+        side: Side,
+        old_pos: Vec3,
+        new_pos: Vec3,
+        made_first_move: Option<&MadeFirstMove>,
+    ) -> bool {
         match self {
-            PieceType::Pawn(inner) => inner.can_move(side, old_pos, new_pos),
-            PieceType::Rook(inner) => inner.can_move(side, old_pos, new_pos),
-            PieceType::Knight(inner) => inner.can_move(side, old_pos, new_pos),
-            PieceType::Bishop(inner) => inner.can_move(side, old_pos, new_pos),
-            PieceType::Queen(inner) => inner.can_move(side, old_pos, new_pos),
-            PieceType::King(inner) => inner.can_move(side, old_pos, new_pos),
+            PieceType::Pawn(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
+            PieceType::Rook(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
+            PieceType::Knight(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
+            PieceType::Bishop(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
+            PieceType::Queen(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
+            PieceType::King(inner) => inner.can_move(side, old_pos, new_pos, made_first_move),
         }
     }
 }
@@ -178,14 +229,28 @@ fn check_if_piece(
 #[derive(Component)]
 pub struct OldPosition(Vec3);
 
+#[derive(Component)]
+pub struct MadeFirstMove;
+
 pub fn handle_piece_movement(
     mut commands: Commands,
     windows: Res<Windows>,
     mouse_input: Res<Input<MouseButton>>,
+    mut game_state: ResMut<GameState>,
     mut set: ParamSet<(
         Query<(Entity, &mut Transform), With<Piece>>,
         Query<&Transform, With<Camera>>,
-        Query<(Entity, &mut Transform, &OldPosition, &Piece, &Side), With<Dragging>>,
+        Query<
+            (
+                Entity,
+                &mut Transform,
+                &OldPosition,
+                &Piece,
+                &Side,
+                Option<&MadeFirstMove>,
+            ),
+            With<Dragging>,
+        >,
     )>,
 ) {
     let window = windows.primary();
@@ -201,16 +266,22 @@ pub fn handle_piece_movement(
 
     // Handle just releasing the mouse
     if mouse_input.just_released(MouseButton::Left) {
-        if let Ok((entity, mut transform, old_pos, piece, side)) = set.p2().get_single_mut() {
-            let Vec3 { x, y, .. } = normalized_mouse_coords;
+        if let Ok(piece_entity) = set.p2().get_single_mut() {
+            let aligned_mouse_coords = (normalized_mouse_coords / 50.).round() * 50.;
 
-            let x = (x / 50.).round() * 50.;
-            let y = (y / 50.).round() * 50.;
+            let (entity, mut transform, old_pos, piece, side, made_first_move) = piece_entity;
 
-            if piece.can_move(*side, old_pos.0, Vec3 { x, y, z: 0. }) {
-                transform.translation.x = x;
-                transform.translation.y = y;
+            if *side == game_state.turn
+                && piece.can_move(*side, old_pos.0, aligned_mouse_coords, made_first_move)
+            {
+                transform.translation = aligned_mouse_coords;
                 transform.translation.z = 1.;
+
+                if piece.0 == PieceType::Pawn(Pawn) && made_first_move.is_none() {
+                    commands.entity(entity).insert(MadeFirstMove);
+                }
+
+                game_state.change_side();
             } else {
                 transform.translation = old_pos.0;
             }
@@ -233,11 +304,9 @@ pub fn handle_piece_movement(
     }
 
     // Drag piece if one is selected
-    if let Ok((_, mut transform, _, piece, _)) = set.p2().get_single_mut() {
+    if let Ok((_, mut transform, _, _, _, _)) = set.p2().get_single_mut() {
         if !mouse_input.just_released(MouseButton::Left) {
-            let Vec3 { x, y, .. } = normalized_mouse_coords;
-            transform.translation.x = x;
-            transform.translation.y = y;
+            transform.translation = normalized_mouse_coords;
             transform.translation.z = 32.;
         }
     }
