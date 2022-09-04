@@ -29,7 +29,7 @@ impl Logic for Pawn {
 
         let Vec3 { x, y, .. } = new_pos - old_pos;
 
-        if x == 0. && y == dir * 100. {
+        if (x == 0. || x == 100. || x == -100.) && y == dir * 100. {
             return true;
         }
         if x == 0. && y == dir * 200. && made_first_move.is_none() {
@@ -44,28 +44,32 @@ impl Logic for Pawn {
 pub struct Rook;
 
 impl Logic for Rook {
-    fn can_move(
-        &self,
-        side: Side,
-        old_pos: Vec3,
-        new_pos: Vec3,
-        made_first_move: Option<&MadeFirstMove>,
-    ) -> bool {
-        false
+    fn can_move(&self, _: Side, old_pos: Vec3, new_pos: Vec3, _: Option<&MadeFirstMove>) -> bool {
+        rook_movement(old_pos, new_pos)
     }
+}
+
+fn rook_movement(old_pos: Vec3, new_pos: Vec3) -> bool {
+    if (new_pos.x == old_pos.x && new_pos.y != old_pos.y)
+        || (new_pos.x != old_pos.x && new_pos.y == old_pos.y)
+    {
+        return true;
+    }
+
+    false
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Knight;
 
 impl Logic for Knight {
-    fn can_move(
-        &self,
-        side: Side,
-        old_pos: Vec3,
-        new_pos: Vec3,
-        made_first_move: Option<&MadeFirstMove>,
-    ) -> bool {
+    fn can_move(&self, _: Side, old_pos: Vec3, new_pos: Vec3, _: Option<&MadeFirstMove>) -> bool {
+        let Vec3 { x, y, .. } = (new_pos - old_pos).abs();
+
+        if (x == 100. && y == 200.) || (x == 200. && y == 100.) {
+            return true;
+        }
+
         false
     }
 }
@@ -74,29 +78,29 @@ impl Logic for Knight {
 pub struct Bishop;
 
 impl Logic for Bishop {
-    fn can_move(
-        &self,
-        side: Side,
-        old_pos: Vec3,
-        new_pos: Vec3,
-        made_first_move: Option<&MadeFirstMove>,
-    ) -> bool {
-        false
+    fn can_move(&self, _: Side, old_pos: Vec3, new_pos: Vec3, _: Option<&MadeFirstMove>) -> bool {
+        bishop_movement(old_pos, new_pos)
     }
+}
+
+fn bishop_movement(old_pos: Vec3, new_pos: Vec3) -> bool {
+    // let old_pos = old_pos.abs();
+    // let new_pos = new_pos.abs();
+
+    // dbg!(old_pos, new_pos);
+
+    // // false
+    // true
+
+    todo!()
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Queen;
 
 impl Logic for Queen {
-    fn can_move(
-        &self,
-        side: Side,
-        old_pos: Vec3,
-        new_pos: Vec3,
-        made_first_move: Option<&MadeFirstMove>,
-    ) -> bool {
-        false
+    fn can_move(&self, _: Side, old_pos: Vec3, new_pos: Vec3, _: Option<&MadeFirstMove>) -> bool {
+        rook_movement(old_pos, new_pos) || bishop_movement(old_pos, new_pos)
     }
 }
 
@@ -104,13 +108,7 @@ impl Logic for Queen {
 pub struct King;
 
 impl Logic for King {
-    fn can_move(
-        &self,
-        side: Side,
-        old_pos: Vec3,
-        new_pos: Vec3,
-        made_first_move: Option<&MadeFirstMove>,
-    ) -> bool {
+    fn can_move(&self, _: Side, old_pos: Vec3, new_pos: Vec3, _: Option<&MadeFirstMove>) -> bool {
         false
     }
 }
@@ -231,10 +229,23 @@ pub fn handle_mouse_up(
             ),
             With<Dragging>,
         >,
+        Query<(Entity, &mut Transform, &Side), With<Piece>>,
     )>,
 ) {
     let window = windows.primary();
     let camera_pos = window_to_world(window, set.p0().single());
+
+    // let p2 = set.p2();
+    // let white_pieces_iter = p2
+    //     .iter()
+    //     .filter(|(_, _, p_side)| **p_side != Side::White)
+    //     .map(|(_, transform, _)| transform.to_owned())
+    //     .collect::<Vec<Transform>>();
+    // let black_pieces_iter = p2
+    //     .iter()
+    //     .filter(|(_, _, p_side)| **p_side != Side::Black)
+    //     .map(|(_, transform, _)| transform.to_owned())
+    //     .collect::<Vec<Transform>>();
 
     // Handle just releasing the mouse
     if mouse_input.just_released(MouseButton::Left) {
@@ -245,6 +256,22 @@ pub fn handle_mouse_up(
 
             if *side == game_state.turn
                 && piece.can_move(*side, old_pos.0, aligned_mouse_coords, made_first_move)
+            // && !{
+            //     match side {
+            //         Side::White => white_pieces_iter.iter().any(|transform| {
+            //             dbg!(
+            //                 transform.translation.x , aligned_mouse_coords.x
+            //                     , transform.translation.y , aligned_mouse_coords.y,"z"
+            //             );
+            //             transform.translation.x == aligned_mouse_coords.x
+            //                 && transform.translation.y == aligned_mouse_coords.y
+            //         }),
+            //         Side::Black => black_pieces_iter.iter().any(|transform| {
+            //             transform.translation.x == aligned_mouse_coords.x
+            //                 && transform.translation.y == aligned_mouse_coords.y
+            //         }),
+            //     }
+            // }
             {
                 transform.translation = aligned_mouse_coords;
                 transform.translation.z = 1.;
