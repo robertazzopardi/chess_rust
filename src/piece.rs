@@ -49,6 +49,7 @@ impl Logic for Rook {
     }
 }
 
+#[inline]
 fn rook_movement(old_pos: Vec3, new_pos: Vec3) -> bool {
     if (new_pos.x == old_pos.x && new_pos.y != old_pos.y)
         || (new_pos.x != old_pos.x && new_pos.y == old_pos.y)
@@ -83,16 +84,15 @@ impl Logic for Bishop {
     }
 }
 
+#[inline]
 fn bishop_movement(old_pos: Vec3, new_pos: Vec3) -> bool {
-    // let old_pos = old_pos.abs();
-    // let new_pos = new_pos.abs();
+    let old_pos = (old_pos + RENDER_SCALE as f32) / 100.;
+    let new_pos = (new_pos + RENDER_SCALE as f32) / 100.;
 
-    // dbg!(old_pos, new_pos);
+    let dx = new_pos.x - old_pos.x;
+    let dy = new_pos.y - old_pos.y;
 
-    // // false
-    // true
-
-    todo!()
+    dx.abs() == dy.abs()
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -100,8 +100,13 @@ pub struct Queen;
 
 impl Logic for Queen {
     fn can_move(&self, _: Side, old_pos: Vec3, new_pos: Vec3, _: Option<&MadeFirstMove>) -> bool {
-        rook_movement(old_pos, new_pos) || bishop_movement(old_pos, new_pos)
+        queen_movement(old_pos, new_pos)
     }
+}
+
+#[inline]
+fn queen_movement(old_pos: Vec3, new_pos: Vec3) -> bool {
+    rook_movement(old_pos, new_pos) || bishop_movement(old_pos, new_pos)
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -109,7 +114,11 @@ pub struct King;
 
 impl Logic for King {
     fn can_move(&self, _: Side, old_pos: Vec3, new_pos: Vec3, _: Option<&MadeFirstMove>) -> bool {
-        false
+        let old= (Vec2::new(old_pos.x, old_pos.y) + RENDER_SCALE as f32) / 100.;
+        let new= (Vec2::new(new_pos.x, new_pos.y) + RENDER_SCALE as f32) / 100.;
+        let d = old.distance(new);
+
+        queen_movement(old_pos, new_pos) && d < 2.
     }
 }
 
