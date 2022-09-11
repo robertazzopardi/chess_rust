@@ -51,8 +51,12 @@ impl Logic for Rook {
 
 #[inline]
 fn rook_movement(old_pos: Vec3, new_pos: Vec3) -> bool {
-    if (new_pos.x == old_pos.x && new_pos.y != old_pos.y)
-        || (new_pos.x != old_pos.x && new_pos.y == old_pos.y)
+    let Vec3 { x, y, .. } = (new_pos - old_pos).abs() % 100.;
+
+    if ((new_pos.x == old_pos.x && new_pos.y != old_pos.y)
+        || (new_pos.x != old_pos.x && new_pos.y == old_pos.y))
+        && x == 0.
+        && y == 0.
     {
         return true;
     }
@@ -86,13 +90,15 @@ impl Logic for Bishop {
 
 #[inline]
 fn bishop_movement(old_pos: Vec3, new_pos: Vec3) -> bool {
+    let Vec3 { x, y, .. } = (new_pos - old_pos).abs() % 100.;
+
     let old_pos = (old_pos + RENDER_SCALE as f32) / 100.;
     let new_pos = (new_pos + RENDER_SCALE as f32) / 100.;
 
     let dx = new_pos.x - old_pos.x;
     let dy = new_pos.y - old_pos.y;
 
-    dx.abs() == dy.abs()
+    dx.abs() == dy.abs() && x == 0. && y == 0.
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -114,8 +120,8 @@ pub struct King;
 
 impl Logic for King {
     fn can_move(&self, _: Side, old_pos: Vec3, new_pos: Vec3, _: Option<&MadeFirstMove>) -> bool {
-        let old= (Vec2::new(old_pos.x, old_pos.y) + RENDER_SCALE as f32) / 100.;
-        let new= (Vec2::new(new_pos.x, new_pos.y) + RENDER_SCALE as f32) / 100.;
+        let old = (Vec2::new(old_pos.x, old_pos.y) + RENDER_SCALE as f32) / 100.;
+        let new = (Vec2::new(new_pos.x, new_pos.y) + RENDER_SCALE as f32) / 100.;
         let d = old.distance(new);
 
         queen_movement(old_pos, new_pos) && d < 2.
@@ -220,6 +226,7 @@ pub struct OldPosition(Vec3);
 #[derive(Component)]
 pub struct MadeFirstMove;
 
+#[allow(clippy::wrong_self_convention)]
 pub fn handle_mouse_up(
     mut commands: Commands,
     windows: Res<Windows>,
@@ -244,17 +251,16 @@ pub fn handle_mouse_up(
     let window = windows.primary();
     let camera_pos = window_to_world(window, set.p0().single());
 
-    // let p2 = set.p2();
-    // let white_pieces_iter = p2
-    //     .iter()
-    //     .filter(|(_, _, p_side)| **p_side != Side::White)
-    //     .map(|(_, transform, _)| transform.to_owned())
-    //     .collect::<Vec<Transform>>();
-    // let black_pieces_iter = p2
-    //     .iter()
-    //     .filter(|(_, _, p_side)| **p_side != Side::Black)
-    //     .map(|(_, transform, _)| transform.to_owned())
-    //     .collect::<Vec<Transform>>();
+    let p2 = set.p2();
+    let pieces_and_sides = p2
+        .iter()
+        .map(|(_, transform, side)| {
+            (
+                Vec2::new(transform.translation.x, transform.translation.y),
+                side.to_owned(),
+            )
+        })
+        .collect::<Vec<(Vec2, Side)>>();
 
     // Handle just releasing the mouse
     if mouse_input.just_released(MouseButton::Left) {
@@ -263,8 +269,14 @@ pub fn handle_mouse_up(
 
             let (entity, mut transform, old_pos, piece, side, made_first_move) = piece_entity;
 
+            let same_team_piece = pieces_and_sides.contains(&(
+                Vec2::new(aligned_mouse_coords.x, aligned_mouse_coords.y),
+                *side,
+            ));
+
             if *side == game_state.turn
                 && piece.can_move(*side, old_pos.0, aligned_mouse_coords, made_first_move)
+                && !same_team_piece
             // && !{
             //     match side {
             //         Side::White => white_pieces_iter.iter().any(|transform| {
@@ -320,6 +332,7 @@ pub fn handle_mouse_press(
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn handle_mouse_movement(
     windows: Res<Windows>,
     mouse_input: Res<Input<MouseButton>>,
