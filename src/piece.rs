@@ -277,22 +277,6 @@ pub fn handle_mouse_up(
             if *side == game_state.turn
                 && piece.can_move(*side, old_pos.0, aligned_mouse_coords, made_first_move)
                 && !same_team_piece
-            // && !{
-            //     match side {
-            //         Side::White => white_pieces_iter.iter().any(|transform| {
-            //             dbg!(
-            //                 transform.translation.x , aligned_mouse_coords.x
-            //                     , transform.translation.y , aligned_mouse_coords.y,"z"
-            //             );
-            //             transform.translation.x == aligned_mouse_coords.x
-            //                 && transform.translation.y == aligned_mouse_coords.y
-            //         }),
-            //         Side::Black => black_pieces_iter.iter().any(|transform| {
-            //             transform.translation.x == aligned_mouse_coords.x
-            //                 && transform.translation.y == aligned_mouse_coords.y
-            //         }),
-            //     }
-            // }
             {
                 transform.translation = aligned_mouse_coords;
                 transform.translation.z = 1.;
