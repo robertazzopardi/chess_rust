@@ -4,7 +4,6 @@ mod piece;
 use bevy::{prelude::*, time::FixedTimestep, window::PresentMode, winit::WinitSettings};
 use chess::ASSET_PATH;
 use piece::{add_pieces, handle_mouse_movement, handle_mouse_press, handle_mouse_up};
-use strum_macros::IntoStaticStr;
 
 const FRAME_TIME: f32 = 1.0 / 60.0;
 
@@ -14,10 +13,19 @@ pub struct Dragging;
 #[derive(Component)]
 struct Board;
 
-#[derive(Clone, Copy, Debug, Component, PartialEq, Eq, IntoStaticStr)]
+#[derive(Clone, Copy, Debug, Component, PartialEq, Eq)]
 pub enum Side {
     White,
     Black,
+}
+
+impl From<Side> for &'static str {
+    fn from(s: Side) -> Self {
+        match s {
+            Side::White => "white",
+            Side::Black => "black",
+        }
+    }
 }
 
 impl Side {
