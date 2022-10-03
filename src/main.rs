@@ -2,6 +2,7 @@ mod board;
 mod piece;
 
 use bevy::{prelude::*, time::FixedTimestep, window::PresentMode, winit::WinitSettings};
+use bevy_svg::prelude::{Svg2dBundle, SvgPlugin};
 use chess::ASSET_PATH;
 use piece::{add_pieces, handle_mouse_movement, handle_mouse_press, handle_mouse_up};
 
@@ -94,8 +95,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn_bundle(Camera2dBundle::default());
 
     // Board Texture
-    commands.spawn_bundle(SpriteBundle {
-        texture: asset_server.load(&format!("{ASSET_PATH}/board/board.png")),
+    commands.spawn_bundle(Svg2dBundle {
+        svg: asset_server.load(&format!("{ASSET_PATH}/board/board.svg")),
+        origin: bevy_svg::prelude::Origin::Center,
         ..Default::default()
     });
 }
@@ -119,6 +121,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(Players)
         .add_plugin(PieceMovement)
+        .add_plugin(SvgPlugin)
         .insert_resource(GameState::default())
         .insert_resource(WinitSettings::game())
         .add_startup_system(window_config)

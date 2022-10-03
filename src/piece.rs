@@ -1,5 +1,6 @@
 use crate::{Dragging, GameState, Side};
 use bevy::prelude::*;
+use bevy_svg::prelude::Svg2dBundle;
 use chess::{window_to_world, ASSET_PATH, RENDER_SCALE, SQUARES};
 use enum_dispatch::enum_dispatch;
 
@@ -147,7 +148,7 @@ pub struct PieceBundle {
     pub piece_type: Piece,
     pub side: Side,
     #[bundle]
-    pub sprite: SpriteBundle,
+    pub sprite: Svg2dBundle,
 }
 
 macro_rules! spawn_piece {
@@ -155,8 +156,8 @@ macro_rules! spawn_piece {
         $(
             $commands.spawn_bundle(PieceBundle {
                 piece_type: Piece(PieceType::$piece($piece)),
-                sprite: SpriteBundle {
-                    texture: $texture.clone(),
+                sprite: bevy_svg::prelude::Svg2dBundle {
+                    svg: $texture.clone(),
                     transform: Transform {
                         translation: Vec3::new($x * 100. - RENDER_SCALE as f32, $y * $offset, 1.),
                         ..Default::default()
@@ -174,29 +175,29 @@ pub fn add_pieces(commands: &mut Commands, asset_server: &Res<AssetServer>, side
     let offset: f32 = side.offset();
 
     // Pawns
-    let pawn_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_pawn.png"));
+    let pawn_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_pawn.svg"));
     for i in 0..SQUARES {
         spawn_piece!(commands, pawn_texture, 250., offset, side, Pawn, i as f32);
     }
 
     // Rooks
-    let rook_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_rook.png"));
+    let rook_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_rook.svg"));
     spawn_piece!(commands, rook_texture, 350., offset, side, Rook, 0., 7.);
 
     // Knights
-    let knight_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_knight.png"));
+    let knight_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_knight.svg"));
     spawn_piece!(commands, knight_texture, 350., offset, side, Knight, 1., 6.);
 
     // Bishop
-    let bishop_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_bishop.png"));
+    let bishop_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_bishop.svg"));
     spawn_piece!(commands, bishop_texture, 350., offset, side, Bishop, 2., 5.);
 
     // Queen
-    let queen_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_queen.png"));
+    let queen_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_queen.svg"));
     spawn_piece!(commands, queen_texture, 350., offset, side, Queen, 4.);
 
     // King
-    let king_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_king.png"));
+    let king_texture = asset_server.load(&format!("{ASSET_PATH}/pieces/{color}_king.svg"));
     spawn_piece!(commands, king_texture, 350., offset, side, King, 3.);
 }
 
