@@ -160,6 +160,7 @@ macro_rules! spawn_piece {
                     svg: $texture.clone(),
                     transform: Transform {
                         translation: Vec3::new($x * 100. - RENDER_SCALE as f32, $y * $offset, 1.),
+                        scale: Vec3::new(0.2, 0.2, 0.),
                         ..Default::default()
                     },
                     ..Default::default()
